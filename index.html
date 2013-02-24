@@ -8,15 +8,38 @@
 	<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<link rel="shortcut icon" href="favicon.ico"/>
 	<style type="text/css">
+  h4 {margin-bottom: 20px; font-weight: 300;}
+  div.row {margin-bottom: 40px;}
 	.hnitems {list-style-type: none; margin: 0; padding: 0;}
+  .hnitems li {line-height: 24px;}
+  .hnscore {padding-right: 6px;}
 	@media (min-width: 768px) {
-		li {overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}		
+		.hnitems li {overflow: hidden; white-space: nowrap; text-overflow: ellipsis;}		
 	}
-	#main {margin-bottom: 20px;}
+  body.skimdark {background-color: #1b1e20;}
+  .skimdark .container {color: #fff; font-weight: 300;}
+  .skimdark .hnnew {color: #ccc;}
+  .skimdark a {color: #ccc;}
+  .skimdark a.hnedit, .skimdark a.hnscore {color: #666;}
+  .skimdark a:hover {
+      border-bottom: none;
+      text-decoration: none;
+      color: #cb553e;
+  }
 	</style>
 </head>
 <body>
-
+<script type="text/javascript">
+var darkTheme = false;
+if(!('darkTheme' in localStorage)) {
+  localStorage['darkTheme'] = JSON.stringify(darkTheme);
+} else {
+  darkTheme = JSON.parse(localStorage['darkTheme']);
+}
+if(darkTheme) {
+  document.getElementsByTagName("body")[0].className += 'skimdark';
+}
+</script>
 <div class="container">
 	<div id="main"></div>
 	<div class="row">
@@ -24,10 +47,14 @@
 	</div>
 	<hr>
 	<footer>
+    <h5>Settings</h5>
+    <p><label class="checkbox"><input type="checkbox" class="toggle-newwindow"> Open links in new window</label></p>
+    <p><label class="checkbox"><input type="checkbox" class="toggle-theme"> Dark theme</label></p>
 		<h5>About</h5>
 		<p>Skim HN shows latest Hacker News submissions sorted by categories.</p>
 		<p>Inspired by <a href="http://skimfeed.com/">SkimFeed</a>.</p>
 		<p>Powered by HN users, <a href="http://www.hnsearch.com/api">HNSearch API</a>, <a href="http://twitter.github.com/bootstrap/">Bootstrap</a>, <a href="http://jquery.com/">jQuery</a>.</p>
+    <p>Dark theme and styling inspired by <a href="http://news.ycombinator.com/user?id=rumberg">rumberg</a>'s <a href="http://news.ycombinator.com/item?id=5188175">redesign</a>.</p>
 		<p>Skim HN is not affiliated with Y Combinator in any way.</p>
 		<p><a href="mailto:ray@skimhn.com">ray@skimhn.com</a></p>
 		<p><a href="https://github.com/raimondsp/skimhn">https://github.com/raimondsp/skimhn</a></p>
@@ -112,11 +139,38 @@ if(!('seen' in localStorage)) {
 } else {
 	seen = JSON.parse(localStorage['seen']);
 }
+// setup new window toggle
+var newWindow = false;
+if(!('newWindow' in localStorage)) {
+  localStorage['newWindow'] = JSON.stringify(newWindow);
+} else {
+  newWindow = JSON.parse(localStorage['newWindow']);
+}
+$('.toggle-newwindow').prop('checked', newWindow);
+$('.toggle-newwindow').change(function(e) {
+  newWindow = newWindow ? false : true;
+  localStorage['newWindow'] = JSON.stringify(newWindow);
+  if(newWindow) {
+    $('.hnitems a').attr('target', '_blank');
+  } else {
+    $('.hnitems a').removeAttr('target');
+  }
+});
+$('.toggle-theme').prop('checked', darkTheme);
+$('.toggle-theme').change(function(e) {
+  darkTheme = darkTheme ? false : true;
+  localStorage['darkTheme'] = JSON.stringify(darkTheme);
+  if(darkTheme) {
+    $('body').addClass('skimdark');
+  } else {
+    $('body').removeClass('skimdark');
+  }
+});
 var raw = $('<div class="row"></div>');
 // add layout items to dom
 for (var i = 0; i < layout.length; i++) {
-	var span = $('<div class="span6"><h5 class="hncat"></h5><ul class="hnitems"></ul></div>');
-	$('h5.hncat', span).text(layout[i].title).append(' <a class="hnedit" href="#edit" data-index="'+i+'">/edit</a>');
+	var span = $('<div class="span6"><h4 class="hncat"></h4><ul class="hnitems"></ul></div>');
+	$('h4.hncat', span).text(layout[i].title).append(' <small><a class="hnedit muted" href="#edit" data-index="'+i+'">/edit</a></small>');
 	$('ul.hnitems', span).attr('data-query', layout[i].query);
 	raw.append(span);
 	// 2 columns in raw
@@ -173,12 +227,15 @@ $('ul.hnitems').each(function(){
 				seen[query] = data.results[0].item.id;
 			};
 			for (var i = 0; i < data.results.length; i++) {
-				var li = $('<li><span class="hnnew"></span><a class="hnscore"></a> <a class="hntitle"></a></li>');
+				var li = $('<li><span class="hnnew"></span><a class="hnscore muted"></a> <a class="hntitle"></a></li>');
 				if(data.results[i].item.id > seen[query]) {
 					$('span.hnnew', li).text('+ ');
 				}
-				$('a.hnscore', li).text('['+data.results[i].item.points+'/'+data.results[i].item.num_comments+']').attr('href', 'http://news.ycombinator.com/item?id='+data.results[i].item.id);
+				$('a.hnscore', li).text(''+data.results[i].item.points+'/'+data.results[i].item.num_comments+'').attr('href', 'http://news.ycombinator.com/item?id='+data.results[i].item.id);
 				$('a.hntitle', li).text(data.results[i].item.title).attr('title', data.results[i].item.title).attr('href', data.results[i].item.url ? data.results[i].item.url : 'http://news.ycombinator.com/item?id='+data.results[i].item.id);
+        if(newWindow) {
+          $('a', li).attr('target', '_blank');
+        }
 				$(ul).append(li);
 			};
 			seen[query] = data.results[0].item.id;
