@@ -56,8 +56,6 @@ if(darkTheme) {
 		<p>Powered by HN users, <a href="http://www.hnsearch.com/api">HNSearch API</a>, <a href="http://twitter.github.com/bootstrap/">Bootstrap</a>, <a href="http://jquery.com/">jQuery</a>.</p>
     <p>Dark theme and styling inspired by <a href="http://news.ycombinator.com/user?id=rumberg">rumberg</a>'s <a href="http://news.ycombinator.com/item?id=5188175">redesign</a>.</p>
 		<p>Skim HN is not affiliated with Y Combinator in any way.</p>
-		<p><a href="mailto:ray@skimhn.com">ray@skimhn.com</a></p>
-		<p><a href="https://github.com/raimondsp/skimhn">https://github.com/raimondsp/skimhn</a></p>
 	</footer>
 </div>
 
@@ -212,51 +210,34 @@ $('#add button.btn-primary').click(function(e){
 $('ul.hnitems').each(function(){
 	var ul = $(this);
 	$.ajax({
-		url: 'http://api.thriftdb.com/api.hnsearch.com/items/_search',
+		url: 'http://hn.algolia.com/api/v1/search?',
 		type: 'GET',
-		dataType: 'jsonp',
+		dataType: 'json',
 		data: {
-			'filter[fields][type]': 'submission',
-			'filter[queries][]': $(this).attr('data-query'),
-			'sortby': 'create_ts desc',
-			'limit': 10
+			'query': $(this).attr('data-query')
 		},
 		success: function(data) {
 			var query = ul.attr('data-query');
 			if (!(query in seen)) {
-				seen[query] = data.results[0].item.id;
+				seen[query] = data.hits[0].objectID;
 			};
-			for (var i = 0; i < data.results.length; i++) {
+			for (var i = 0; i < data.hits.length; i++) {
 				var li = $('<li><span class="hnnew"></span><a class="hnscore muted"></a> <a class="hntitle"></a></li>');
-				if(data.results[i].item.id > seen[query]) {
+				if(data.hits[i].objectID > seen[query]) {
 					$('span.hnnew', li).text('+ ');
 				}
-				$('a.hnscore', li).text(''+data.results[i].item.points+'/'+data.results[i].item.num_comments+'').attr('href', 'http://news.ycombinator.com/item?id='+data.results[i].item.id);
-				$('a.hntitle', li).text(data.results[i].item.title).attr('title', data.results[i].item.title).attr('href', data.results[i].item.url ? data.results[i].item.url : 'http://news.ycombinator.com/item?id='+data.results[i].item.id);
+				$('a.hnscore', li).text(''+data.hits[i].points+'/'+data.hits[i].num_comments+'').attr('href', 'http://news.ycombinator.com/item?id='+data.hits[i].objectID);
+				$('a.hntitle', li).text(data.hits[i].title).attr('title', data.hits[i].title).attr('href', data.hits[i].url ? data.hits[i].url : 'http://news.ycombinator.com/item?id='+data.hits[i].objectID);
         if(newWindow) {
           $('a', li).attr('target', '_blank');
         }
 				$(ul).append(li);
 			};
-			seen[query] = data.results[0].item.id;
+			seen[query] = data.hits[0].id;
 			localStorage['seen'] = JSON.stringify(seen);
 		} 
 	});
 });
-</script>
-<script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-38317802-1']);
-  _gaq.push(['_setDomainName', 'skimhn.com']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
 </script>
 </body>
 </html>
