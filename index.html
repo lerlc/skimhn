@@ -70,7 +70,11 @@ if(darkTheme) {
 	    <input type="text" id="cattitle" class="input-xxlarge">
 	    <label>Query</label>
 	    <input type="text" id="catquery" class="input-xxlarge">
-	    <span class="help-block">Fields: points, username, url, domain, title, num_comments, text (e.g. num_comments:[50 TO *] AND title:android).</span>
+		<label>Tags</label>
+	    <input type="text" id="cattags" class="input-xxlarge">
+		<label>Restrict</label>
+	    <input type="text" id="catrestrict" class="input-xxlarge">
+	    <span class="help-block">Tags are ANDed by default, can be ORed if between parenthesis. For example author_pg,(story,poll) filters on author=pg AND (type=story OR type=poll).</span>
 	  </fieldset>
 	</form>
   </div>
@@ -91,7 +95,11 @@ if(darkTheme) {
 	    <input type="text" id="cattitle" class="input-xxlarge">
 	    <label>Query</label>
 	    <input type="text" id="catquery" class="input-xxlarge">
-	    <span class="help-block">Fields: points, username, url, domain, title, num_comments, text (e.g. num_comments:[50 TO *] AND title:android).</span>
+	    <label>Tags</label>
+	    <input type="text" id="cattags" class="input-xxlarge">
+		<label>Restrict</label>
+	    <input type="text" id="catrestrict" class="input-xxlarge">
+	    <span class="help-block">Tags are ANDed by default, can be ORed if between parenthesis. For example author_pg,(story,poll) filters on author=pg AND (type=story OR type=poll).</span>
 	    <input type="hidden" id="catindex">
 	  </fieldset>
 	</form>
@@ -108,21 +116,21 @@ if(darkTheme) {
 <script type="text/javascript">
 // default layout
 var layout = [
-	{title: "Show HN", query: "title:\"Show HN\""},
-	{title: "Self HN", query: "-domain:*"},
-	{title: "YC, PG", query: "title:YC OR title:PG OR username:pg"},
-	{title: "50+ points", query: "points:[50 TO *]"},
-	{title: "GitHub", query: "domain:github.com OR domain:*.github.com"},
-	{title: "Ruby, Rails", query: "title:ruby OR title:rails OR title:ror"},
-	{title: "Stack Exchange", query: "domain:stackoverflow.com OR domain:stackexchange.com OR domain:*.stackexchange.com OR domain:superuser.com OR domain:serverfault.com"},
-	{title: "iTunes", query: "domain:itunes.apple.com"},
-	{title: "Chrome Web Store", query: "domain:chrome.google.com"},
-	{title: "Crowd funding", query: "domain:kickstarter.com OR domain:indiegogo.com"},
-	{title: "Meetup", query: "domain:meetup.com OR title:meetup"},
-	{title: "Wikipedia", query: "domain:en.wikipedia.org"},
-	{title: "Videos", query: "domain:youtube.com OR domain:youtu.be OR domain:vimeo.com OR domain:ted.com"},
-	{title: "Scientific", query: "domain:nature.com OR domain:sciencedaily.com OR domain:newscientist.com OR domain:phys.org OR domain:scientificamerican.com OR domain:popsci.com"},
-	{title: ".edu", query: "domain:*.edu"}
+	{title: "Show HN", query: "Show HN query" , tags: "story", restrict: ""},
+	{title: "Self HN", query: "-domain:*", tags: "story", restrict: ""},
+	{title: "YC, PG", query: "title:YC OR title:PG OR username:pg", tags: "story", restrict: ""},
+	{title: "50+ points", query: "points:[50 TO *]", tags: "story", restrict: ""},
+	{title: "GitHub", query: "domain:github.com OR domain:*.github.com", tags: "story", restrict: ""},
+	{title: "Ruby, Rails", query: "title:ruby OR title:rails OR title:ror", tags: "story", restrict: ""},
+	{title: "Stack Exchange", query: "domain:stackoverflow.com OR domain:stackexchange.com OR domain:*.stackexchange.com OR domain:superuser.com OR domain:serverfault.com", tags: "story", restrict: ""},
+	{title: "iTunes", query: "domain:itunes.apple.com", tags: "story", restrict: ""},
+	{title: "Chrome Web Store", query: "domain:chrome.google.com", tags: "story", restrict: ""},
+	{title: "Crowd funding", query: "domain:kickstarter.com OR domain:indiegogo.com", tags: "story", restrict: ""},
+	{title: "Meetup", query: "domain:meetup.com OR title:meetup", tags: "story", restrict: ""},
+	{title: "Wikipedia", query: "domain:en.wikipedia.org", tags: "story", restrict: ""},
+	{title: "Videos", query: "domain:youtube.com OR domain:youtu.be OR domain:vimeo.com OR domain:ted.com", tags: "story", restrict: ""},
+	{title: "Scientific", query: "domain:nature.com OR domain:sciencedaily.com OR domain:newscientist.com OR domain:phys.org OR domain:scientificamerican.com OR domain:popsci.com", tags: "story", restrict: ""},
+	{title: ".edu", query: "domain:*.edu", tags: "story", restrict: ""}
 ];
 // check if layout is already in localStorage
 if(!('layout' in localStorage)) {
@@ -170,6 +178,8 @@ for (var i = 0; i < layout.length; i++) {
 	var span = $('<div class="span6"><h4 class="hncat"></h4><ul class="hnitems"></ul></div>');
 	$('h4.hncat', span).text(layout[i].title).append(' <small><a class="hnedit muted" href="#edit" data-index="'+i+'">/edit</a></small>');
 	$('ul.hnitems', span).attr('data-query', layout[i].query);
+	$('ul.hnitems', span).attr('data-tags', layout[i].tags);
+	$('ul.hnitems', span).attr('data-restrict', layout[i].restrict);
 	raw.append(span);
 	// 2 columns in raw
 	if (i%2 == 1 || i == layout.length-1) {
@@ -182,6 +192,8 @@ $('a.hnedit').click(function(e){
 	var i = $(this).attr('data-index');
 	$('#edit #cattitle').val(layout[i].title);
 	$('#edit #catquery').val(layout[i].query);
+	$('#edit #cattags').val(layout[i].tags);
+	$('#edit #catrestrict').val(layout[i].restrict);
 	$('#edit #catindex').val(i);
 	$('#edit').modal('show');
 });
@@ -189,6 +201,8 @@ $('#edit button.btn-primary').click(function(e){
 	var i = $('#edit #catindex').val();
 	layout[i].title = $('#edit #cattitle').val();
 	layout[i].query = $('#edit #catquery').val();
+	layout[i].tags = $('#edit #cattags').val();
+	layout[i].restrict = $('#edit #catrestrict').val();
 	localStorage['layout'] = JSON.stringify(layout);
 	$('#edit').modal('hide');
 	window.location.reload(false);
@@ -209,13 +223,48 @@ $('#add button.btn-primary').click(function(e){
 // process layout
 $('ul.hnitems').each(function(){
 	var ul = $(this);
-	$.ajax({
+	if($(this).attr('data-restrict') != '') {
+		$.ajax({
+			url: 'http://hn.algolia.com/api/v1/search?',
+			type: 'GET',
+			dataType: 'json',
+			
+			data: {
+				'query': $(this).attr('data-query'),
+				'tags': $(this).attr('data-tags'),
+				'restrictSearchableAttributes': $(this).attr('data-restrict')
+			},
+			success: function(data) {
+				var query = ul.attr('data-query');
+				if (!(query in seen)) {
+					seen[query] = data.hits[0].objectID;
+				};
+				for (var i = 0; i < data.hits.length; i++) {
+					var li = $('<li><span class="hnnew"></span><a class="hnscore muted"></a> <a class="hntitle"></a></li>');
+					if(data.hits[i].objectID > seen[query]) {
+						$('span.hnnew', li).text('+ ');
+					}
+					$('a.hnscore', li).text(''+data.hits[i].points+'/'+data.hits[i].num_comments+'').attr('href', 'http://news.ycombinator.com/item?id='+data.hits[i].objectID);
+					$('a.hntitle', li).text(data.hits[i].title).attr('title', data.hits[i].title).attr('href', data.hits[i].url ? data.hits[i].url : 'http://news.ycombinator.com/item?id='+data.hits[i].objectID);
+			if(newWindow) {
+			  $('a', li).attr('target', '_blank');
+			}
+					$(ul).append(li);
+				};
+				seen[query] = data.hits[0].id;
+				localStorage['seen'] = JSON.stringify(seen);
+			} 
+		});
+	}
+	else{
+		$.ajax({
 		url: 'http://hn.algolia.com/api/v1/search?',
 		type: 'GET',
 		dataType: 'json',
+		
 		data: {
 			'query': $(this).attr('data-query'),
-			'tags': "story"
+			'tags': $(this).attr('data-tags')
 		},
 		success: function(data) {
 			var query = ul.attr('data-query');
@@ -238,6 +287,7 @@ $('ul.hnitems').each(function(){
 			localStorage['seen'] = JSON.stringify(seen);
 		} 
 	});
+	}
 });
 </script>
 </body>
